@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+ <html>
+ <head>
+<title>Search example | CartoDB.js</title>
+<meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+<meta http-equiv="content-type" content="text/html; charset=UTF-8"/>
+<link rel="shortcut icon" href="http://cartodb.com/assets/favicon.ico" />
+<style>
+  html, body, #map {
+    height: 95%;
+    padding: 0;
+    margin: 0;
+  }
+ </style>
+<script src="http://code.jquery.com/jquery-latest.min.js"></script>
+   <link rel="stylesheet" 
+      href="http://libs.cartocdn.com/cartodb.js/v3/3.11/themes/css/cartodb.css" />
+  <!--[if lte IE 8]>
+    <link rel="stylesheet"    
+      href="http://libs.cartocdn.com/cartodb.js/v3/themes/css/cartodb.ie.css" />
+  <![endif]-->
+  </head>
+<body>
+  <div id="map"></div>
+
+<div>
+<p>Use the selector to choose the country in which you want the map to be centered:</p>
+
+<select id="trail-selector"></select>
+
+</div>
+<!-- include cartodb.js library -->
+<script src="http://libs.cartocdn.com/cartodb.js/v3/3.11/cartodb.js"></script>
+<script>
+  var layer;
+  function main() {
+
+    var map;
+    var selections=[];
+    var sel = document.getElementById('trail-selector');
+    var layerUrl = 'https://team.cartodb.com/u/iriberri/api/v2/viz/431ca5d0-02f5-11e5-9e34-0e4fddd5de28/viz.json';
+    
+    cartodb.createVis('map', layerUrl)
+      .on('done', function(vis, layer) {
+
+     map = vis.getNativeMap();
+
+     var sql = new cartodb.SQL({ user: 'iriberri' });
+     sql.execute("SELECT distinct(name) FROM world_borders_9").done(function(data){
+      for(var j =1; j< data.total_rows; j++){
+        selections.push(data.rows[j].name);
+      }
+
+     for(var i = 0; i < selections.length; i++) {
+        var opt = document.createElement('option');
+        opt.innerHTML = selections[i];
+        opt.value = selections[i];
+        sel.appendChild(opt);
+      }
+    });
+
+
+
+    }).on('error', function() {
+      cartodb.log.log("some error occurred");
+    });
+
+    function processFormData() {
+    var input = $( "#trail-selector option:selected" ).text();
+    return input;
+    }
+
+    var search_text;
+    $(document).on('change','#trail-selector',function(){
+     search_text = processFormData();
+     var sql = new cartodb.SQL({ user: 'iriberri' });
+       sql.getBounds("SELECT * FROM world_borders_9 where name Like '" + search_text + 
+       "'").done(function(bounds) {
+       map.fitBounds(bounds)
+      });
+    });
+
+  
+
+  }
+  window.onload = main;
+     </script>
+    </body>
+  </html>
